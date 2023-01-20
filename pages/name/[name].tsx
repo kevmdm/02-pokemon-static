@@ -146,7 +146,7 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
       params: { name },
     })),
 
-    fallback: false,
+    fallback: "blocking",
   };
 
   //https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/132.svg"
@@ -155,6 +155,17 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 export const getStaticProps: GetStaticProps = async ({ params }) => {
     const { name } = params as { name: string };
     // const { data } = await pokeApi.get<Pokemon>(`/pokemon/${name}`);
+
+    const pokemon = await getPokemonInfo(name);
+
+    if (!pokemon) {
+      return {
+        redirect: {
+          destination: "/",
+          permanent: false,
+        },
+      };
+    }
 
     // const pokemon = {
     //   id: data.id,
@@ -170,9 +181,10 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     // };
 
     return {
-      props:{
-        pokemon: await getPokemonInfo(name)
-      }
+      props: {
+        pokemon,
+      },
+      revalidate: 86400,
     };
   };
 

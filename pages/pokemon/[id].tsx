@@ -3,73 +3,71 @@ import { useEffect, useState } from "react";
 import { GetStaticProps, NextPage, GetStaticPaths } from "next";
 import { Button, Card, Container, Grid, Text, Image } from "@nextui-org/react";
 
-import confetti from 'canvas-confetti'
+import confetti from "canvas-confetti";
 
 import { Layout } from "../../components/layouts";
 import { pokeApi } from "../../api";
 import { Pokemon } from "../../interfaces/";
 import { localFavorites } from "../../utils";
-import { getPokemonInfo } from '../../utils/getPokemonInfo';
+import { getPokemonInfo } from "../../utils/getPokemonInfo";
+import { redirect } from "next/dist/server/api-utils";
 
 interface Props {
   pokemon: Pokemon;
 }
-
 
 export const PokemonPage: NextPage<Props> = ({ pokemon }) => {
   const onToggleFavorite = () => {
     localFavorites.toggleFavorite(pokemon.id);
     setIsInFavorites(!isInFavorites);
 
-    if (isInFavorites)return; 
+    if (isInFavorites) return;
 
     confetti({
-      zIndex:999,
-      particleCount:100,
-      spread:160,
-      angle:-100,
-      origin:{
-        x:1,
-        y:0,
-      }
-    })
+      zIndex: 999,
+      particleCount: 100,
+      spread: 160,
+      angle: -100,
+      origin: {
+        x: 1,
+        y: 0,
+      },
+    });
     confetti({
-      zIndex:999,
-      particleCount:100,
-      spread:160,
-      angle:-100,
-      origin:{
-        x:0,
-        y:0,
-      }
-    })
+      zIndex: 999,
+      particleCount: 100,
+      spread: 160,
+      angle: -100,
+      origin: {
+        x: 0,
+        y: 0,
+      },
+    });
     confetti({
-      zIndex:999,
-      particleCount:100,
-      spread:160,
-      angle:-100,
-      origin:{
-        x:0.5,
-        y:0,
-      }
-    })
+      zIndex: 999,
+      particleCount: 100,
+      spread: 160,
+      angle: -100,
+      origin: {
+        x: 0.5,
+        y: 0,
+      },
+    });
     confetti({
-      zIndex:999,
-      particleCount:100,
-      spread:160,
-      angle:100,
-      origin:{
-        x:0.5,
-        y:1,
-      }
-    })
+      zIndex: 999,
+      particleCount: 100,
+      spread: 160,
+      angle: 100,
+      origin: {
+        x: 0.5,
+        y: 1,
+      },
+    });
   };
 
   const [isInFavorites, setIsInFavorites] = useState(
     localFavorites.existInFavorites(pokemon.id)
   );
-
-
 
   return (
     <Layout title={pokemon.name}>
@@ -152,12 +150,16 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
       params: { id },
     })),
 
-    fallback: false,
+    // fallback: false,
+    fallback: "blocking",
   };
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { id } = params as { id: string };
+
+  const pokemon = await getPokemonInfo(id);
+
   // const { data } = await pokeApi.get<Pokemon>(`/pokemon/${id}`);
 
   // const pokemon = {
@@ -172,10 +174,20 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   //     pokemon, //tiene el mismo valor que la variable tecnicamente es pokemon:pokemon
   //   },
   // };
+  if (!pokemon) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+
   return {
-    props:{
-      pokemon: await getPokemonInfo(id)
-    }
+    props: {
+      pokemon,
+    },
+    revalidate: 86400,
   };
 };
 export default PokemonPage;
